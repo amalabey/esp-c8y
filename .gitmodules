@@ -1,0 +1,4 @@
+[submodule "lib/CumulocityClient"]
+	path = lib/CumulocityClient
+	url = git@github.com:amalabey/CumulocityClient.git
+	branch = add-ssl-support
