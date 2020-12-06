@@ -84,5 +84,5 @@ void loop()
   int8_t rssi = WiFi.RSSI();
   char rssiStr[10];
   sprintf(rssiStr, "%d", rssi);
-  _client.createMeasurement("SignalStrength", "T", rssiStr, (char *)"*m");
+  _client.createMeasurement("c8y_SignalStrength", "rssi", rssiStr, (char *)"dBm");
 }
