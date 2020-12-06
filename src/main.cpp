@@ -20,7 +20,7 @@ DHT dht(DHTPIN, DHTTYPE);
 WiFiClientSecure _wifiClient = WiFiClientSecure();
 CumulocityClient _client = CumulocityClient(_wifiClient, (char *)"00000000");
 
-void connectCumulocityServer(Settings_t settings, bool requestDeviceCreds)
+void connectCumulocityServer(Settings settings, bool requestDeviceCreds)
 {
   Serial.println("Connecting to Cumulocity...");
   _client.setDeviceId(settings.clientId);
@@ -56,7 +56,7 @@ void setup()
   //SPIFFS.format();
 
   Configuration _config;
-  Settings_t settings = _config.getSettings(SPIFFS, Serial);
+  Settings settings = _config.getSettings(SPIFFS, Serial);
 
   // Connect to Wifi
   WiFi.begin(settings.wifiSsid, settings.wifiPassword);

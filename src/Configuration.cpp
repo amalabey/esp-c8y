@@ -34,12 +34,12 @@ int readLine(HardwareSerial &serial, const char* prompt, char* line, int maxSize
     }
 }
 
-Settings_t Configuration:: readFromSerial(HardwareSerial &serial)
+Settings Configuration:: readFromSerial(HardwareSerial &serial)
 {
     char *buffer = new char[1024];
     readLine(serial, "Enter connection parameters (wifi-ssid,wifi-psk,host,tenant,user,pwd,clientid):", buffer, 1024);
 
-    Settings_t settings;
+    Settings settings;
     settings.wifiSsid = strtok(buffer, ",");
     settings.wifiPassword = strtok(NULL, ",");
     settings.hostName = strtok(NULL, ",");
@@ -51,7 +51,7 @@ Settings_t Configuration:: readFromSerial(HardwareSerial &serial)
     return settings;
 }
 
-Settings_t Configuration::getSettings(fs::FS &fs, HardwareSerial &serial)
+Settings Configuration::getSettings(fs::FS &fs, HardwareSerial &serial)
 {
     if(this->isPersisted(fs))
     {
@@ -66,7 +66,7 @@ bool Configuration::isPersisted(fs::FS &fs)
     return fs.exists(CONFIG_FILE_NAME);
 }
 
-void Configuration::persistSettings(fs::FS &fs, Settings_t settings)
+void Configuration::persistSettings(fs::FS &fs, Settings settings)
 {
     Serial.printf("Writing file: %s\r\n", CONFIG_FILE_NAME);
 
@@ -88,7 +88,7 @@ void Configuration::persistSettings(fs::FS &fs, Settings_t settings)
 }
 
 
-Settings_t Configuration::readFromFileSystem(fs::FS &fs)
+Settings Configuration::readFromFileSystem(fs::FS &fs)
 {
     Serial.printf("Reading file: %s\r\n", CONFIG_FILE_NAME);
 
@@ -109,7 +109,7 @@ Settings_t Configuration::readFromFileSystem(fs::FS &fs)
     }
     buffer[length] = '\0';
 
-    Settings_t settings;
+    Settings settings;
     settings.wifiSsid = strtok(buffer, "\r\n");
     settings.wifiPassword = strtok(NULL, "\r\n");
     settings.hostName = strtok(NULL, "\r\n");

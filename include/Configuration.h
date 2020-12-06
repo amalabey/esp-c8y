@@ -5,7 +5,7 @@
 #include "FS.h"
 #include "SPIFFS.h"
 
-struct Settings_t
+struct Settings
 {
     char *wifiSsid;
     char *wifiPassword;
@@ -19,10 +19,10 @@ struct Settings_t
 class Configuration
 {
 private:
-    Settings_t readFromSerial(HardwareSerial &serial);
-    Settings_t readFromFileSystem(fs::FS &fs);
+    Settings readFromSerial(HardwareSerial &serial);
+    Settings readFromFileSystem(fs::FS &fs);
 public:
-    Settings_t getSettings(fs::FS &fs, HardwareSerial &serial);
+    Settings getSettings(fs::FS &fs, HardwareSerial &serial);
     bool isPersisted(fs::FS &fs);
-    void persistSettings(fs::FS &fs, Settings_t settings);
+    void persistSettings(fs::FS &fs, Settings settings);
 };
