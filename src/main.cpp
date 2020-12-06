@@ -4,12 +4,16 @@
 #else //ESP8266
 #include <ESP8266WiFi.h>
 #endif
-#include "Credentials.h"
 
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 #include "Configuration.h"
 #endif
+
+#include "DHT.h"
+#define DHTPIN 26
+#define DHTTYPE DHT21 // AM2301
+DHT dht(DHTPIN, DHTTYPE);
 
 #define FORMAT_SPIFFS_IF_FAILED true
 
@@ -54,6 +58,7 @@ void setup()
   Configuration _config;
   Settings_t settings = _config.getSettings(SPIFFS, Serial);
 
+  // Connect to Wifi
   WiFi.begin(settings.wifiSsid, settings.wifiPassword);
   Serial.print("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED)
@@ -63,8 +68,8 @@ void setup()
   }
   Serial.println("connected to wifi");
 
+  // Connect to Cumulocity
   connectCumulocityServer(settings, !_config.isPersisted(SPIFFS));
-
   if (!_config.isPersisted(SPIFFS))
   {
     Credentials received = _client.getCredentials();
@@ -73,13 +78,25 @@ void setup()
     settings.tenantId = received.tenant;
     _config.persistSettings(SPIFFS, settings);
   }
+
+  // Init temp/humidity sensor library
+  dht.begin();
 }
 
 void loop()
 {
   delay(1000);
   _client.loop();
-  _client.createMeasurement("Temperature", "T", "20.5", (char *)"*C");
+
+  float temperature = dht.readTemperature();
+  char tempStr[10];
+  sprintf(tempStr, "%f", temperature);
+  _client.createMeasurement("c8y_Temperature", "T", tempStr, (char *)"*C");
+
+  float humidity = dht.readHumidity();
+  char humidityStr[10];
+  sprintf(humidityStr, "%f", humidity);
+  _client.createMeasurement("Humidity", "H", humidityStr, (char *)"%\t");
 
   int8_t rssi = WiFi.RSSI();
   char rssiStr[10];
