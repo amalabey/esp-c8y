@@ -16,6 +16,31 @@
 WiFiClientSecure _wifiClient = WiFiClientSecure();
 CumulocityClient _client = CumulocityClient(_wifiClient, (char *)"00000000");
 
+void connectCumulocityServer(Settings_t settings, bool requestDeviceCreds)
+{
+  Serial.println("Connecting to Cumulocity...");
+  _client.setDeviceId(settings.clientId);
+  _client.connect(settings.hostName, 8883, settings.tenantId, settings.userName, settings.password);
+
+  if (requestDeviceCreds)
+  {
+    _client.retrieveDeviceCredentials();
+    while (!_client.checkCredentialsReceived())
+    {
+      Serial.print("#");
+      delay(1000);
+    }
+
+    Serial.println("Reconnecting to Cumulocity");
+
+    _client.disconnect();
+    _client.reconnect();
+  }
+
+  Serial.println("Registering device...");
+  _client.registerDevice(settings.clientId, (char *)"c8y_esp32");
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -38,12 +63,14 @@ void setup()
   }
   Serial.println("connected to wifi");
 
-  _client.setDeviceId(settings.clientId);
-  _client.connect(settings.hostName, 8883, settings.tenantId, settings.userName, settings.password);
-  _client.registerDevice(settings.clientId, (char *)"c8y_esp32");
+  connectCumulocityServer(settings, !_config.isPersisted(SPIFFS));
 
   if (!_config.isPersisted(SPIFFS))
   {
+    Credentials received = _client.getCredentials();
+    settings.userName = received.username;
+    settings.password = received.password;
+    settings.tenantId = received.tenant;
     _config.persistSettings(SPIFFS, settings);
   }
 }

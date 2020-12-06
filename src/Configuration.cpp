@@ -7,17 +7,47 @@
 #include "Credentials.h"
 
 const char *CONFIG_FILE_NAME = "/settings.txt";
+const char END_MARKER = '\n';
+
+int readLine(HardwareSerial &serial, const char* prompt, char* line, int maxSize)
+{
+    serial.println(prompt);
+    char rc;
+    int index = 0;
+
+    while (true)
+    {
+        if(serial.available() > 0)
+        {
+            rc = serial.read();
+            serial.print(rc);
+            if(rc != END_MARKER && index < maxSize)
+            {
+                line[index] = rc;        
+                index++;
+            }else
+            {
+                line[index] = '\0';
+                return index;
+            }
+        }
+    }
+}
 
 Settings_t Configuration:: readFromSerial(HardwareSerial &serial)
 {
+    char *buffer = new char[1024];
+    readLine(serial, "Enter connection parameters (wifi-ssid,wifi-psk,host,tenant,user,pwd,clientid):", buffer, 1024);
+
     Settings_t settings;
-    settings.wifiSsid = (char *)WIFI_SSID;
-    settings.wifiPassword = (char *)WIFI_PWD;
-    settings.hostName = (char *)C8Y_HOST;
-    settings.tenantId = (char *)C8Y_TENANT;
-    settings.userName = (char *)C8Y_USERNAME;
-    settings.password = (char *)C8Y_PASSWORD;
-    settings.clientId = (char *)C8Y_CLIENTID;
+    settings.wifiSsid = strtok(buffer, ",");
+    settings.wifiPassword = strtok(NULL, ",");
+    settings.hostName = strtok(NULL, ",");
+    settings.tenantId = strtok(NULL, ",");
+    settings.userName = strtok(NULL, ",");
+    settings.password = strtok(NULL, ",");
+    settings.clientId = strtok(NULL, ",");
+
     return settings;
 }
 
@@ -78,7 +108,6 @@ Settings_t Configuration::readFromFileSystem(fs::FS &fs)
         buffer[length++] = c;
     }
     buffer[length] = '\0';
-    Serial.printf("Buffer: %s \r\n", buffer);
 
     Settings_t settings;
     settings.wifiSsid = strtok(buffer, "\r\n");
