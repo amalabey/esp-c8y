@@ -6,25 +6,22 @@
 #endif
 #include "Credentials.h"
 
-const char *ssid = WIFI_SSID;
-const char *wifiPassword = WIFI_PWD;
-char *host = C8Y_HOST;
-char *username = C8Y_USERNAME;    
-char *c8yPassword = C8Y_PASSWORD; 
-char *tenant = C8Y_TENANT;  
-char *clientId = C8Y_CLIENTID;
-const char* root_ca = ROOT_CA;
+#ifndef CONFIGURATION_H
+#define CONFIGURATION_H
+#include "Configuration.h"
+#endif
 
-WiFiClientSecure wifiClient;
-CumulocityClient c8yClient(wifiClient, clientId);
+WiFiClientSecure _wifiClient = WiFiClientSecure();
+CumulocityClient _client = CumulocityClient(_wifiClient, "00000000");
 
 void setup()
 {
-
   Serial.begin(115200);
 
-  wifiClient.setCACert(root_ca);
-  WiFi.begin(ssid, wifiPassword);
+  Configuration _config;
+  Settings_t settings = _config.getSettings();
+
+  WiFi.begin(settings.wifiSsid, settings.wifiPassword);
 
   Serial.print("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED)
@@ -34,19 +31,19 @@ void setup()
   }
   Serial.println("connected to wifi");
 
-  c8yClient.connect(host, 8883, tenant, username, c8yPassword);
-
-  c8yClient.registerDevice(clientId, "c8y_esp32");
+  _client.setDeviceId(settings.clientId);
+  _client.connect(settings.hostName, 8883, settings.tenantId, settings.userName, settings.password);
+  _client.registerDevice(settings.clientId, "c8y_esp32");
 }
 
 void loop()
 {
   delay(1000);
-  c8yClient.loop();
-  c8yClient.createMeasurement("Temperature", "T", "20.5", "*C");
-  
+  _client.loop();
+  _client.createMeasurement("Temperature", "T", "20.5", "*C");
+
   int8_t rssi = WiFi.RSSI();
   char rssiStr[10];
   sprintf(rssiStr, "%d", rssi);
-  c8yClient.createMeasurement("SignalStrength", "T", rssiStr, "*m");
+  _client.createMeasurement("SignalStrength", "T", rssiStr, "*m");
 }
