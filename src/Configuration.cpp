@@ -6,9 +6,9 @@
 
 #include "Credentials.h"
 
-const char *CONFIG_FILE_NAME = "settings";
+const char *CONFIG_FILE_NAME = "/settings.txt";
 
-Settings_t Configuration::getSettings()
+Settings_t Configuration:: readFromSerial(HardwareSerial &serial)
 {
     Settings_t settings;
     settings.wifiSsid = (char *)WIFI_SSID;
@@ -21,7 +21,22 @@ Settings_t Configuration::getSettings()
     return settings;
 }
 
-void Configuration::writeToFileSystem(fs::FS &fs, Settings_t settings)
+Settings_t Configuration::getSettings(fs::FS &fs, HardwareSerial &serial)
+{
+    if(this->isPersisted(fs))
+    {
+        return this->readFromFileSystem(fs);
+    }else{
+        return this->readFromSerial(serial);
+    }
+}
+
+bool Configuration::isPersisted(fs::FS &fs)
+{
+    return fs.exists(CONFIG_FILE_NAME);
+}
+
+void Configuration::persistSettings(fs::FS &fs, Settings_t settings)
 {
     Serial.printf("Writing file: %s\r\n", CONFIG_FILE_NAME);
 
@@ -31,20 +46,14 @@ void Configuration::writeToFileSystem(fs::FS &fs, Settings_t settings)
         return;
     }
 
-    String message;
-    message += settings.wifiSsid + '\n';
-    message += settings.wifiPassword + '\n';
-    message += settings.hostName + '\n';
-    message += settings.tenantId + '\n';
-    message += settings.userName + '\n';
-    message += settings.password + '\n';
-    message += settings.clientId + '\n';
+    file.println(settings.wifiSsid);
+    file.println(settings.wifiPassword);
+    file.println(settings.hostName);
+    file.println(settings.tenantId);
+    file.println(settings.userName);
+    file.println(settings.password);
+    file.println(settings.clientId);
 
-    if(file.print(message)){
-        Serial.println("- file written");
-    } else {
-        Serial.println("- write failed");
-    }
     file.close();
 }
 
@@ -53,7 +62,7 @@ Settings_t Configuration::readFromFileSystem(fs::FS &fs)
 {
     Serial.printf("Reading file: %s\r\n", CONFIG_FILE_NAME);
 
-    char buffer[4096];
+    char buffer[4096];  
     
     File file = fs.open(CONFIG_FILE_NAME, FILE_READ);
     if (!file || file.isDirectory())
@@ -69,15 +78,16 @@ Settings_t Configuration::readFromFileSystem(fs::FS &fs)
         buffer[length++] = c;
     }
     buffer[length] = '\0';
+    Serial.printf("Buffer: %s \r\n", buffer);
 
     Settings_t settings;
-    settings.wifiSsid = strtok(buffer, "\n");
-    settings.wifiPassword = strtok(NULL, "\n");
-    settings.hostName = strtok(NULL, "\n");
-    settings.tenantId = strtok(NULL, "\n");
-    settings.userName = strtok(NULL, "\n");
-    settings.password = strtok(NULL, "\n");
-    settings.clientId = strtok(NULL, "\n");
+    settings.wifiSsid = strtok(buffer, "\r\n");
+    settings.wifiPassword = strtok(NULL, "\r\n");
+    settings.hostName = strtok(NULL, "\r\n");
+    settings.tenantId = strtok(NULL, "\r\n");
+    settings.userName = strtok(NULL, "\r\n");
+    settings.password = strtok(NULL, "\r\n");
+    settings.clientId = strtok(NULL, "\r\n");
     
     file.close();
 

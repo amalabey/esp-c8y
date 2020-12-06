@@ -19,8 +19,10 @@ struct Settings_t
 class Configuration
 {
 private:
+    Settings_t readFromSerial(HardwareSerial &serial);
     Settings_t readFromFileSystem(fs::FS &fs);
-    void writeToFileSystem(fs::FS &fs, Settings_t settings);
 public:
-    Settings_t getSettings();
+    Settings_t getSettings(fs::FS &fs, HardwareSerial &serial);
+    bool isPersisted(fs::FS &fs);
+    void persistSettings(fs::FS &fs, Settings_t settings);
 };
