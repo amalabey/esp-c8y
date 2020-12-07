@@ -28,9 +28,10 @@ String readLine(HardwareSerial &serial, const char* prompt)
     }
 }
 
-String getToken(String str, const String &delimiter, int& position)
+String getToken(String &str, const String &delimiter, int& position)
 {
-    size_t delimPos = str.indexOf(delimiter);
+    size_t delimPos = str.indexOf(delimiter, position);
+    //Serial.printf("Str:%s,delim:%s,pos:%d,delimPos:%d \r\n", str.c_str(), delimiter.c_str(), position, delimPos);
     if(delimPos > 0 && delimPos < str.length())
     {
         String token = str.substring(position, delimPos);
@@ -40,7 +41,6 @@ String getToken(String str, const String &delimiter, int& position)
     {
         return "";
     }
-    
 }
 
 Settings Configuration:: readFromSerial(HardwareSerial &serial)

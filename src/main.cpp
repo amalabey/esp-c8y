@@ -27,6 +27,17 @@ char* _userName;
 char* _password;
 char* _clientId;
 
+void printConfig()
+{
+  Serial.printf("WifiSsid: %s \n", _wifiSsid);
+  Serial.printf("Wifi Psk: %s \n", _wifiPassword);
+  Serial.printf("Hostname: %s \n", _hostName);
+  Serial.printf("Tenant Id: %s \n", _tenantId);
+  Serial.printf("Username: %s \n", _userName);
+  Serial.printf("Password: %s \n", _password);
+  Serial.printf("ClientId: %s \n", _clientId);
+}
+
 void connectCumulocityServer(bool requestDeviceCreds)
 {
   Serial.println("Connecting to Cumulocity...");
@@ -63,7 +74,7 @@ void setup()
     Serial.println("SPIFFS Mount Failed");
     return;
   }
-  //SPIFFS.format();
+  SPIFFS.format();
 
   // Load the configuration
   Configuration _config;
@@ -75,6 +86,7 @@ void setup()
   _userName = strdup(settings.userName.c_str());
   _password = strdup(settings.password.c_str());
   _clientId = strdup(settings.clientId.c_str());
+  printConfig();
 
   // Connect to Wifi
   WiFi.begin(_wifiSsid, _wifiPassword);
