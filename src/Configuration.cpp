@@ -2,18 +2,17 @@
 #define CONFIGURATION_H
 #include "Configuration.h"
 #endif
-#include <string.h>
 
 #include "Credentials.h"
 
 const char *CONFIG_FILE_NAME = "/settings.txt";
 const char END_MARKER = '\n';
 
-int readLine(HardwareSerial &serial, const char* prompt, char* line, int maxSize)
+String readLine(HardwareSerial &serial, const char* prompt)
 {
     serial.println(prompt);
     char rc;
-    int index = 0;
+    String line = "";
 
     while (true)
     {
@@ -21,32 +20,43 @@ int readLine(HardwareSerial &serial, const char* prompt, char* line, int maxSize
         {
             rc = serial.read();
             serial.print(rc);
-            if(rc != END_MARKER && index < maxSize)
-            {
-                line[index] = rc;        
-                index++;
-            }else
-            {
-                line[index] = '\0';
-                return index;
-            }
+            if(rc != END_MARKER)
+                line += rc;
+            else
+                return line;
         }
     }
 }
 
+String getToken(String str, const String &delimiter, int& position)
+{
+    size_t delimPos = str.indexOf(delimiter);
+    if(delimPos > 0 && delimPos < str.length())
+    {
+        String token = str.substring(position, delimPos);
+        position = delimPos + delimiter.length();
+        return token;
+    }else
+    {
+        return "";
+    }
+    
+}
+
 Settings Configuration:: readFromSerial(HardwareSerial &serial)
 {
-    char *buffer = new char[1024];
-    readLine(serial, "Enter connection parameters (wifi-ssid,wifi-psk,host,tenant,user,pwd,clientid):", buffer, 1024);
+    String connParams = readLine(serial, "Enter connection parameters (wifi-ssid,wifi-psk,host,tenant,user,pwd,clientid):");
 
     Settings settings;
-    settings.wifiSsid = strtok(buffer, ",");
-    settings.wifiPassword = strtok(NULL, ",");
-    settings.hostName = strtok(NULL, ",");
-    settings.tenantId = strtok(NULL, ",");
-    settings.userName = strtok(NULL, ",");
-    settings.password = strtok(NULL, ",");
-    settings.clientId = strtok(NULL, ",");
+    const String delimiter = ",";
+    int tokenPos = 0;
+    settings.wifiSsid = getToken(connParams, delimiter, tokenPos);
+    settings.wifiPassword = getToken(connParams, delimiter, tokenPos);
+    settings.hostName = getToken(connParams, delimiter, tokenPos);
+    settings.tenantId = getToken(connParams, delimiter, tokenPos);
+    settings.userName = getToken(connParams, delimiter, tokenPos);
+    settings.password = getToken(connParams, delimiter, tokenPos);
+    settings.clientId = getToken(connParams, delimiter, tokenPos);
 
     return settings;
 }

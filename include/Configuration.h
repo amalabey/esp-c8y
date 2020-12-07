@@ -4,16 +4,17 @@
 #endif
 #include "FS.h"
 #include "SPIFFS.h"
+#include <string.h>
 
 struct Settings
 {
-    char *wifiSsid;
-    char *wifiPassword;
-    char *hostName;
-    char *tenantId;
-    char *userName;
-    char *password;
-    char *clientId;
+    String wifiSsid;
+    String wifiPassword;
+    String hostName;
+    String tenantId;
+    String userName;
+    String password;
+    String clientId;
 };
 
 class Configuration

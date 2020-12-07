@@ -19,12 +19,20 @@ DHT dht(DHTPIN, DHTTYPE);
 
 WiFiClientSecure _wifiClient = WiFiClientSecure();
 CumulocityClient _client = CumulocityClient(_wifiClient, (char *)"00000000");
+char* _wifiSsid;
+char* _wifiPassword;
+char* _hostName;
+char* _tenantId;
+char* _userName;
+char* _password;
+char* _clientId;
 
-void connectCumulocityServer(Settings settings, bool requestDeviceCreds)
+void connectCumulocityServer(bool requestDeviceCreds)
 {
   Serial.println("Connecting to Cumulocity...");
-  _client.setDeviceId(settings.clientId);
-  _client.connect(settings.hostName, 8883, settings.tenantId, settings.userName, settings.password);
+  
+  _client.setDeviceId(_clientId);
+  _client.connect(_hostName, 8883, _tenantId, _userName, _password);
 
   if (requestDeviceCreds)
   {
@@ -42,12 +50,14 @@ void connectCumulocityServer(Settings settings, bool requestDeviceCreds)
   }
 
   Serial.println("Registering device...");
-  _client.registerDevice(settings.clientId, (char *)"c8y_esp32");
+  _client.registerDevice(_clientId, (char *)"c8y_esp32");
 }
 
 void setup()
 {
   Serial.begin(115200);
+
+  // Initialize file system to store configuration
   if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED))
   {
     Serial.println("SPIFFS Mount Failed");
@@ -55,11 +65,19 @@ void setup()
   }
   //SPIFFS.format();
 
+  // Load the configuration
   Configuration _config;
   Settings settings = _config.getSettings(SPIFFS, Serial);
+  _wifiSsid = strdup(settings.wifiSsid.c_str());
+  _wifiPassword = strdup(settings.wifiPassword.c_str());
+  _hostName = strdup(settings.hostName.c_str());
+  _tenantId = strdup(settings.tenantId.c_str());
+  _userName = strdup(settings.userName.c_str());
+  _password = strdup(settings.password.c_str());
+  _clientId = strdup(settings.clientId.c_str());
 
   // Connect to Wifi
-  WiFi.begin(settings.wifiSsid, settings.wifiPassword);
+  WiFi.begin(_wifiSsid, _wifiPassword);
   Serial.print("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -69,7 +87,7 @@ void setup()
   Serial.println("connected to wifi");
 
   // Connect to Cumulocity
-  connectCumulocityServer(settings, !_config.isPersisted(SPIFFS));
+  connectCumulocityServer(!_config.isPersisted(SPIFFS));
   if (!_config.isPersisted(SPIFFS))
   {
     Credentials received = _client.getCredentials();
