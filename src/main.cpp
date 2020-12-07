@@ -74,7 +74,7 @@ void setup()
     Serial.println("SPIFFS Mount Failed");
     return;
   }
-  SPIFFS.format();
+  //SPIFFS.format();
 
   // Load the configuration
   Configuration _config;
@@ -103,9 +103,18 @@ void setup()
   if (!_config.isPersisted(SPIFFS))
   {
     Credentials received = _client.getCredentials();
-    settings.userName = received.username;
-    settings.password = received.password;
-    settings.tenantId = received.tenant;
+    if(_userName != NULL) free(_userName);
+    _userName = strdup(received.username);
+
+    if(_password != NULL) free(_password);
+    _password = strdup(received.password);
+
+    if(_tenantId != NULL) free(_tenantId);
+    _tenantId = strdup(received.tenant);
+
+    settings.userName = _tenantId;
+    settings.password = _password;
+    settings.tenantId = _tenantId;
     _config.persistSettings(SPIFFS, settings);
   }
 
