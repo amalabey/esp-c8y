@@ -10,6 +10,12 @@
 #include "Configuration.h"
 #endif
 
+#ifndef COMMANDS_H
+#define COMMANDS_H
+#include "Commands.h"
+#endif
+
+#include <string.h>
 #include "DHT.h"
 #define DHTPIN 26
 #define DHTTYPE DHT21 // AM2301
@@ -26,6 +32,8 @@ char* _tenantId;
 char* _userName;
 char* _password;
 char* _clientId;
+CommandHandler _commandHandler = CommandHandler(3);
+BuiltinLedCommand _ledCommand = BuiltinLedCommand();
 
 void printConfig()
 {
@@ -62,6 +70,19 @@ void connectCumulocityServer(bool requestDeviceCreds)
 
   Serial.println("Registering device...");
   _client.registerDevice(_clientId, (char *)"c8y_esp32");
+}
+
+int handleCumulocityOperation(char* templateCode, char* payload) 
+{
+  Serial.printf("handleCumulocityOperation:: command: %s, payload: %s \n", templateCode, payload);
+  if(strcmp(templateCode, "511") == 0) // If c8y_Command
+  {
+    char* commandCode = strtok(payload, " ");
+    char* commandPayload = strtok(NULL, " ");
+    return _commandHandler.handleCommand(commandCode, commandPayload);
+  }
+
+  return -1;
 }
 
 void setup()
@@ -112,11 +133,19 @@ void setup()
     if(_tenantId != NULL) free(_tenantId);
     _tenantId = strdup(received.tenant);
 
-    settings.userName = _tenantId;
+    settings.userName = _userName;
     settings.password = _password;
     settings.tenantId = _tenantId;
     _config.persistSettings(SPIFFS, settings);
   }
+
+  // Setup commands and the handler
+  _commandHandler.registerCommand(&_ledCommand);
+  String supportedOperationsStr = "c8y_Command,c8y_Restart";
+  char* supportedOperations = strdup(supportedOperationsStr.c_str());
+  _client.setCallback(handleCumulocityOperation);
+  _client.setSupportedOperations(supportedOperations);
+  _client.getPendingOperations();
 
   // Init temp/humidity sensor library
   dht.begin();
