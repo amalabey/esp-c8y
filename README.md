@@ -1,6 +1,7 @@
 # esp-c8y
 ESP device integration with Cumulocity platform
 
-## Gotchas
-
-#### Change the C8Y port number in CumulocityClient.cpp to 8883, so that it works against ssl
+# Demo Capabilities
+- Cache Device Credentials in the device using SPIFFS file system
+- Report measurements using DHT31 Temp/Humidity sensor
+- Control ESP32's built-in LED using c8y_Command
