@@ -31,7 +31,7 @@ void CommandHandler::registerCommand(Command *command)
     this->_commands[this->_size++] = command;
 };
 
-int CommandHandler::handleCommand(const char *commandCode, const char *payload)
+int CommandHandler::handleCommand(const char *commandCode, char *payload)
 {
     Serial.printf("command: %s, payload: %s \n", commandCode, payload);
     if (this->_commands == NULL)
@@ -50,30 +50,79 @@ int CommandHandler::handleCommand(const char *commandCode, const char *payload)
     return -1;
 };
 
-BuiltinLedCommand::BuiltinLedCommand()
+String CommandHandler::getSupportedOperations()
+{
+    String operations = "";
+
+    for (int i = 0; i < this->_size; i++)
+    {
+        CommandPtr command = this->_commands[i];
+        if (command != NULL)
+        {
+            if(operations.length() > 0) operations += ",";
+            operations += command->getOperationName();
+        }
+    }
+
+    return operations;
+}
+
+ShellCommand::ShellCommand()
 {
     pinMode(LED_BUILTIN, OUTPUT);
     this->_state = HIGH;
     digitalWrite(LED_BUILTIN, this->_state);
 };
 
-String BuiltinLedCommand::getCode()
+String ShellCommand::getCode()
 {
-    return "LED";
+    return "511";
 };
 
-int BuiltinLedCommand::execute(const char *payload)
+String ShellCommand::getOperationName()
 {
-    Serial.printf("BuiltinLedCommand::payload: %s \n", payload);
-    if (strcmp("ON", payload) == 0)
-    {
-        this->_state = LOW;
-    }
-    else
-    {
-        this->_state = HIGH;
-    }
+    return "c8y_Command";
+};
 
+int ShellCommand::execute(char *payload)
+{
+    Serial.printf("ShellCommand::payload: %s\n", payload);
+    char *commandCode = strtok(payload, " ");
+    char *commandPayload = strtok(NULL, " ");
+    Serial.printf("commandCode:%s, commandPaylod:%s\n", commandCode, commandPayload);
+    if (strcmp(commandCode, "LED") == 0)
+    {
+        if (strcmp("ON", commandPayload) == 0)
+        {
+            this->_state = LOW;
+        }
+        else
+        {
+            this->_state = HIGH;
+        }
+    }
+    Serial.printf("LED state: %d", this->_state);
     digitalWrite(LED_BUILTIN, this->_state);
+    return 0;
+};
+
+FirmwareUpdateCommand::FirmwareUpdateCommand()
+{
+};
+
+String FirmwareUpdateCommand::getCode()
+{
+    return "515";
+};
+
+String FirmwareUpdateCommand::getOperationName()
+{
+    return "c8y_Firmware";
+};
+
+int FirmwareUpdateCommand::execute(char *payload)
+{
+    Serial.printf("FirmwareUpdateCommand::payload: %s \n", payload);
+    
     return 0;
 };
